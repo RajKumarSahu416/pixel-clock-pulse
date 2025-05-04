@@ -6,7 +6,8 @@ import Navbar from '../components/common/Navbar';
 import Footer from '../components/common/Footer';
 import DashboardContent from '../components/admin/DashboardContent';
 import PlaceholderContent from '../components/admin/PlaceholderContent';
-import AdminTabs from '../components/admin/AdminTabs';
+import AdminTabNavigation from '../components/admin/AdminTabNavigation';
+import AdminLeaveManagement from '../components/admin/leave/AdminLeaveManagement';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -75,13 +76,7 @@ const AdminDashboard = () => {
           />
         );
       case 'leave':
-        return (
-          <PlaceholderContent 
-            title="Leave Management" 
-            icon={<FileText className="w-full h-full text-cyber-neon-pink opacity-50" />}
-            color="pink"
-          />
-        );
+        return <AdminLeaveManagement />;
       case 'payroll':
         return (
           <PlaceholderContent 
@@ -107,10 +102,10 @@ const AdminDashboard = () => {
         </div>
         
         {/* Tabs */}
-        <AdminTabs activeTab={activeTab} onTabChange={handleTabChange} />
+        <AdminTabNavigation activeTab={activeTab} onTabChange={handleTabChange} />
         
         {/* Content based on active tab */}
-        <div>
+        <div className="cyber-panel p-6">
           {renderContent()}
         </div>
       </main>

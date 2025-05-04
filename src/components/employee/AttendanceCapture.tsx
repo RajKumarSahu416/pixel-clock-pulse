@@ -9,6 +9,8 @@ const AttendanceCapture = () => {
   const [capturing, setCapturing] = useState(false);
   const [image, setImage] = useState<string | null>(null);
   const [checkedIn, setCheckedIn] = useState(false);
+  const [checkInTime, setCheckInTime] = useState<string | undefined>(undefined);
+  const [checkOutTime, setCheckOutTime] = useState<string | undefined>(undefined);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
@@ -43,6 +45,8 @@ const AttendanceCapture = () => {
   const handleCheckIn = () => {
     // In a real app, we would handle the image upload to Supabase Storage here
     console.log('Checking in with image:', image);
+    const now = new Date();
+    setCheckInTime(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
     setCheckedIn(true);
     setImage(null);
 
@@ -55,7 +59,8 @@ const AttendanceCapture = () => {
   const handleCheckOut = () => {
     // In a real app, we would handle the image upload to Supabase Storage here
     console.log('Checking out with image:', image);
-    setCheckedIn(false);
+    const now = new Date();
+    setCheckOutTime(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
     setImage(null);
 
     // Mock API call
@@ -80,10 +85,12 @@ const AttendanceCapture = () => {
 
         <div className="flex space-x-3 mt-4">
           {!capturing && !image && (
-            <CameraCapture 
-              onPhotoCapture={handlePhotoCapture} 
-              onCancel={handleCancelCapture}
-            />
+            <button
+              onClick={startCamera}
+              className="cyber-button-sm"
+            >
+              Start Camera
+            </button>
           )}
 
           {capturing && (
@@ -104,7 +111,11 @@ const AttendanceCapture = () => {
           )}
         </div>
 
-        <AttendanceStatus checkedIn={checkedIn} />
+        <AttendanceStatus 
+          checkedIn={checkedIn} 
+          checkInTime={checkInTime}
+          checkOutTime={checkOutTime}
+        />
       </div>
     </div>
   );
