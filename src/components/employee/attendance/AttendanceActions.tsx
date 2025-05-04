@@ -1,13 +1,14 @@
 
 import React from 'react';
-import { Check, X } from 'lucide-react';
+import { Check, RotateCcw, X } from 'lucide-react';
 
 interface AttendanceActionsProps {
-  image: string | null;
+  image: string;
   checkedIn: boolean;
   onCheckIn: () => void;
   onCheckOut: () => void;
   onRetake: () => void;
+  uploading: boolean;
 }
 
 const AttendanceActions: React.FC<AttendanceActionsProps> = ({ 
@@ -15,29 +16,40 @@ const AttendanceActions: React.FC<AttendanceActionsProps> = ({
   checkedIn, 
   onCheckIn, 
   onCheckOut, 
-  onRetake 
+  onRetake,
+  uploading
 }) => {
-  if (!image) {
-    return null;
-  }
-
   return (
-    <>
-      <button 
-        onClick={!checkedIn ? onCheckIn : onCheckOut}
-        className="cyber-button"
-      >
-        <Check size={18} className="inline mr-1" />
-        {!checkedIn ? "Check In" : "Check Out"}
-      </button>
-      <button 
+    <div className="w-full flex flex-wrap justify-center gap-2">
+      {!checkedIn ? (
+        <button
+          onClick={onCheckIn}
+          className="cyber-button flex items-center gap-2"
+          disabled={uploading}
+        >
+          <Check size={16} />
+          Check In with Photo
+        </button>
+      ) : (
+        <button
+          onClick={onCheckOut}
+          className="cyber-button-pink flex items-center gap-2"
+          disabled={uploading}
+        >
+          <X size={16} />
+          Check Out with Photo
+        </button>
+      )}
+      
+      <button
         onClick={onRetake}
-        className="cyber-button cyber-button-pink"
+        className="cyber-button-sm bg-cyber-gray-800 flex items-center gap-2"
+        disabled={uploading}
       >
-        <X size={18} className="inline mr-1" />
+        <RotateCcw size={16} />
         Retake
       </button>
-    </>
+    </div>
   );
 };
 

@@ -7,6 +7,7 @@ import CameraDisplay from './attendance/CameraDisplay';
 import AttendanceActions from './attendance/AttendanceActions';
 import AttendanceStatus from './attendance/AttendanceStatus';
 import { useAttendance } from './attendance/hooks/useAttendance';
+import { toast } from "sonner";
 
 const AttendanceCapture: React.FC = () => {
   const {
@@ -87,6 +88,7 @@ const AttendanceCapture: React.FC = () => {
               onCheckIn={handleCheckIn}
               onCheckOut={handleCheckOut}
               onRetake={resetCapture}
+              uploading={uploading}
             />
           )}
         </div>

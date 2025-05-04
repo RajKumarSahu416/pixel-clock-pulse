@@ -35,7 +35,24 @@ export async function uploadImage(imageData: string): Promise<string | null> {
     
     console.log("Uploading to bucket 'photos' with fileName:", fileName);
     
-    // Skip bucket checks since we've already created it via SQL
+    // Check if bucket exists, create it if not
+    const { data: buckets } = await supabase.storage.listBuckets();
+    const photosBucket = buckets?.find(bucket => bucket.name === 'photos');
+    
+    if (!photosBucket) {
+      console.log("Photos bucket doesn't exist, creating it...");
+      const { error: createBucketError } = await supabase.storage.createBucket('photos', {
+        public: true,
+        allowedMimeTypes: ['image/png', 'image/jpeg', 'image/jpg'],
+        fileSizeLimit: 5242880 // 5MB
+      });
+      
+      if (createBucketError) {
+        console.error('Error creating bucket:', createBucketError);
+      } else {
+        console.log("Photos bucket created successfully");
+      }
+    }
 
     // Upload to Supabase Storage with retries
     let retries = 3;
@@ -248,7 +265,7 @@ export async function performCheckIn(photoUrl: string | null) {
     } else {
       console.log('Creating new attendance record with photo');
       // Create new record
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('attendance')
         .insert([{
           employee_id: userId,
@@ -256,14 +273,13 @@ export async function performCheckIn(photoUrl: string | null) {
           check_in_time: now.toISOString(),
           check_in_photo: photoUrl,
           status: 'present'
-        }])
-        .select();
+        }]);
         
       if (error) {
         return handleAttendanceError(error, 'creating attendance record');
       }
       
-      console.log('New attendance record created with photo:', data);
+      console.log('New attendance record created with photo');
     }
     
     toast.success('Successfully checked in with photo!');
