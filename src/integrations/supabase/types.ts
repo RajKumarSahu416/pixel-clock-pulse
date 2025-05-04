@@ -9,16 +9,294 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      attendance: {
+        Row: {
+          check_in_photo: string | null
+          check_in_time: string | null
+          check_out_photo: string | null
+          check_out_time: string | null
+          created_at: string | null
+          date: string
+          employee_id: string
+          id: string
+          status: string | null
+        }
+        Insert: {
+          check_in_photo?: string | null
+          check_in_time?: string | null
+          check_out_photo?: string | null
+          check_out_time?: string | null
+          created_at?: string | null
+          date?: string
+          employee_id: string
+          id?: string
+          status?: string | null
+        }
+        Update: {
+          check_in_photo?: string | null
+          check_in_time?: string | null
+          check_out_photo?: string | null
+          check_out_time?: string | null
+          created_at?: string | null
+          date?: string
+          employee_id?: string
+          id?: string
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attendance_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      employees: {
+        Row: {
+          created_at: string | null
+          department: string | null
+          designation: string | null
+          email: string
+          id: string
+          join_date: string
+          name: string
+          salary: number
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          department?: string | null
+          designation?: string | null
+          email: string
+          id?: string
+          join_date?: string
+          name: string
+          salary?: number
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          department?: string | null
+          designation?: string | null
+          email?: string
+          id?: string
+          join_date?: string
+          name?: string
+          salary?: number
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      leave_balances: {
+        Row: {
+          employee_id: string
+          id: string
+          leave_type_id: string
+          total_days: number
+          used_days: number
+          year: number
+        }
+        Insert: {
+          employee_id: string
+          id?: string
+          leave_type_id: string
+          total_days?: number
+          used_days?: number
+          year?: number
+        }
+        Update: {
+          employee_id?: string
+          id?: string
+          leave_type_id?: string
+          total_days?: number
+          used_days?: number
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leave_balances_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leave_balances_leave_type_id_fkey"
+            columns: ["leave_type_id"]
+            isOneToOne: false
+            referencedRelation: "leave_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leave_types: {
+        Row: {
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          description?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          description?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      leaves: {
+        Row: {
+          created_at: string | null
+          employee_id: string
+          end_date: string
+          id: string
+          leave_type_id: string
+          reason: string | null
+          start_date: string
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          employee_id: string
+          end_date: string
+          id?: string
+          leave_type_id: string
+          reason?: string | null
+          start_date: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          employee_id?: string
+          end_date?: string
+          id?: string
+          leave_type_id?: string
+          reason?: string | null
+          start_date?: string
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leaves_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leaves_leave_type_id_fkey"
+            columns: ["leave_type_id"]
+            isOneToOne: false
+            referencedRelation: "leave_types"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payroll: {
+        Row: {
+          base_salary: number
+          bonus: number
+          created_at: string | null
+          deductions: number
+          employee_id: string
+          id: string
+          leaves_taken: number
+          month: string
+          net_salary: number
+          present_days: number
+          status: string | null
+          updated_at: string | null
+          working_days: number
+        }
+        Insert: {
+          base_salary?: number
+          bonus?: number
+          created_at?: string | null
+          deductions?: number
+          employee_id: string
+          id?: string
+          leaves_taken?: number
+          month: string
+          net_salary?: number
+          present_days?: number
+          status?: string | null
+          updated_at?: string | null
+          working_days?: number
+        }
+        Update: {
+          base_salary?: number
+          bonus?: number
+          created_at?: string | null
+          deductions?: number
+          employee_id?: string
+          id?: string
+          leaves_taken?: number
+          month?: string
+          net_salary?: number
+          present_days?: number
+          status?: string | null
+          updated_at?: string | null
+          working_days?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payroll_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+        }
+        Insert: {
+          avatar_url?: string | null
+          id: string
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Update: {
+          avatar_url?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_role: {
+        Args: { user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
+      is_admin: {
+        Args: Record<PropertyKey, never>
+        Returns: boolean
+      }
+      owns_employee_record: {
+        Args: { employee_user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "employee" | "admin"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -133,6 +411,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["employee", "admin"],
+    },
   },
 } as const
