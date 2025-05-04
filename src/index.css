@@ -1,101 +1,161 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 225 18% 14%;
+    --foreground: 210 40% 98%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 224 20% 12%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 224 20% 12%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 222.2 47.4% 11.2%;
+    --primary: 263 70% 63%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 199 89% 48%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 223 18% 20%;
+    --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 286 64% 60%;
+    --accent-foreground: 210 40% 98%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 263 40% 30%;
+    --input: 224 20% 20%;
+    --ring: 263 70% 63%;
 
-    --radius: 0.5rem;
-
-    --sidebar-background: 0 0% 98%;
-
-    --sidebar-foreground: 240 5.3% 26.1%;
-
-    --sidebar-primary: 240 5.9% 10%;
-
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --radius: 0.25rem;
   }
 
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-}
-
-@layer base {
   * {
     @apply border-border;
   }
 
+  html {
+    scrollbar-color: theme('colors.cyber.neon-purple') theme('colors.cyber.bg-dark');
+  }
+
   body {
-    @apply bg-background text-foreground;
+    @apply bg-cyber-bg-dark text-foreground relative;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    background-image: 
+      linear-gradient(to bottom, rgba(26, 31, 44, 0.8), rgba(26, 31, 44, 0.8)),
+      url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0 0h100v100H0z' fill='none'/%3E%3Cpath d='M0 0h50v50H0z' fill='%238B5CF6' fill-opacity='0.05'/%3E%3Cpath d='M50 0h50v50H50z' fill='%230EA5E9' fill-opacity='0.05'/%3E%3Cpath d='M0 50h50v50H0z' fill='%230EA5E9' fill-opacity='0.05'/%3E%3Cpath d='M50 50h50v50H50z' fill='%238B5CF6' fill-opacity='0.05'/%3E%3C/svg%3E");
+  }
+}
+
+@layer components {
+  .cyber-border {
+    @apply border border-cyber-neon-purple/50 relative;
+  }
+
+  .cyber-border::before {
+    content: '';
+    @apply absolute inset-0 border border-cyber-neon-purple/30 -m-[3px];
+    clip-path: polygon(
+      0% 5%, 5% 0%, 95% 0%, 100% 5%,
+      100% 95%, 95% 100%, 5% 100%, 0% 95%
+    );
+  }
+
+  .cyber-panel {
+    @apply bg-cyber-gray-800/80 rounded backdrop-blur-sm border border-cyber-neon-purple/30;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .cyber-panel::before {
+    content: '';
+    @apply absolute top-0 left-0 w-full h-[1px] bg-cyber-neon-purple/50;
+    box-shadow: 0 0 15px 2px theme('colors.cyber.neon-purple');
+  }
+
+  .cyber-panel::after {
+    content: '';
+    @apply absolute pointer-events-none inset-0 overflow-hidden;
+    background: linear-gradient(
+      115deg,
+      transparent 0%,
+      transparent 40%,
+      rgba(139, 92, 246, 0.3) 50%,
+      transparent 60%,
+      transparent 100%
+    );
+    transform: translateX(-100%);
+    animation: cyber-panel-shine 3s infinite;
+  }
+
+  @keyframes cyber-panel-shine {
+    0% { transform: translateX(-100%); }
+    60% { transform: translateX(100%); }
+    100% { transform: translateX(100%); }
+  }
+
+  .cyber-button {
+    @apply bg-cyber-neon-purple/10 border border-cyber-neon-purple/50 px-6 py-2 hover:bg-cyber-neon-purple/20 
+    text-white relative overflow-hidden transition-all duration-300 
+    hover:animate-neon-pulse focus:outline-none;
+    clip-path: polygon(
+      0% 15%, 15% 0%, 85% 0%, 100% 15%,
+      100% 85%, 85% 100%, 15% 100%, 0% 85%
+    );
+  }
+
+  .cyber-button::before {
+    content: '';
+    @apply absolute top-0 left-0 w-full h-[1px] bg-cyber-neon-purple;
+    box-shadow: 0 0 5px theme('colors.cyber.neon-purple');
+  }
+
+  .cyber-button-blue {
+    @apply bg-cyber-neon-blue/10 border border-cyber-neon-blue/50 hover:bg-cyber-neon-blue/20;
+  }
+
+  .cyber-button-blue::before {
+    @apply bg-cyber-neon-blue;
+    box-shadow: 0 0 5px theme('colors.cyber.neon-blue');
+  }
+
+  .cyber-button-pink {
+    @apply bg-cyber-neon-pink/10 border border-cyber-neon-pink/50 hover:bg-cyber-neon-pink/20;
+  }
+
+  .cyber-button-pink::before {
+    @apply bg-cyber-neon-pink;
+    box-shadow: 0 0 5px theme('colors.cyber.neon-pink');
+  }
+
+  .neon-text {
+    @apply text-cyber-neon-purple animate-glow;
+  }
+
+  .neon-text-blue {
+    @apply text-cyber-neon-blue animate-glow;
+  }
+
+  .neon-text-pink {
+    @apply text-cyber-neon-pink animate-glow;
+  }
+
+  .scan-line {
+    @apply absolute inset-0 overflow-hidden pointer-events-none;
+    background: linear-gradient(
+      to bottom,
+      transparent 0%,
+      rgba(139, 92, 246, 0.1) 50%,
+      transparent 100%
+    );
+    animation: scan-line 3s linear infinite;
+    height: 10px;
+    width: 100%;
   }
 }
