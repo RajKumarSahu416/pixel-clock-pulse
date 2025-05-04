@@ -71,7 +71,9 @@ export function useAttendance() {
 
   const handleQuickCheckIn = async () => {
     try {
+      setUploading(true);
       const result = await performQuickCheckIn();
+      setUploading(false);
       
       if (result.success) {
         setCheckInTime(result.time);
@@ -81,6 +83,7 @@ export function useAttendance() {
         throw result.error;
       }
     } catch (error) {
+      setUploading(false);
       console.error('Error during quick check-in:', error);
       toast.error('Failed to check in. Please try again.');
     }
@@ -93,16 +96,21 @@ export function useAttendance() {
       
       // Upload image to storage if available
       console.log('Uploading photo for check-in...');
-      const photoUrl = image ? await uploadImage(image) : null;
+      let photoUrl = null;
       
-      if (!photoUrl && image) {
-        setUploadError('Failed to upload photo. Please try again.');
-        console.error('Failed to upload image');
-        toast.error('Failed to upload photo. Please try again.');
-        setUploading(false);
-        return;
+      if (image) {
+        photoUrl = await uploadImage(image);
+        if (!photoUrl) {
+          setUploadError('Failed to upload photo. Please try again.');
+          console.error('Failed to upload image');
+          toast.error('Failed to upload photo. Please try again.');
+          setUploading(false);
+          return;
+        }
       }
       
+      // Only proceed with check-in if photo upload was successful (or no photo)
+      console.log("Photo uploaded successfully, proceeding with check-in");
       const result = await performCheckIn(photoUrl);
       
       if (result.success) {
@@ -128,15 +136,20 @@ export function useAttendance() {
       
       // Upload image to storage if available
       console.log('Uploading photo for check-out...');
-      const photoUrl = image ? await uploadImage(image) : null;
+      let photoUrl = null;
       
-      if (!photoUrl && image) {
-        setUploadError('Failed to upload photo. Please try again.');
-        toast.error('Failed to upload photo. Please try again.');
-        setUploading(false);
-        return;
+      if (image) {
+        photoUrl = await uploadImage(image);
+        if (!photoUrl) {
+          setUploadError('Failed to upload photo. Please try again.');
+          toast.error('Failed to upload photo. Please try again.');
+          setUploading(false);
+          return;
+        }
       }
       
+      // Only proceed with check-out if photo upload was successful (or no photo)
+      console.log("Photo uploaded successfully, proceeding with check-out");
       const result = await performCheckOut(photoUrl);
       
       if (result.success) {

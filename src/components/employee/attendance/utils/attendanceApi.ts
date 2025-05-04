@@ -1,3 +1,4 @@
+
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -29,21 +30,55 @@ export async function uploadImage(imageData: string): Promise<string | null> {
     
     // Generate a unique filename
     const timestamp = new Date().getTime();
-    const fileName = `attendance/${TEST_USER_ID}_${timestamp}.png`;
+    const fileName = `attendance/${timestamp}.png`;
     
     console.log("Uploading to bucket 'photos' with fileName:", fileName);
     
-    // Upload to Supabase Storage
-    const { data, error } = await supabase.storage
-      .from('photos')
-      .upload(fileName, blob, {
-        cacheControl: '3600',
-        upsert: false
+    // Try to ensure bucket exists (this is a public bucket)
+    const { data: bucketData, error: bucketError } = await supabase.storage.getBucket('photos');
+    if (bucketError) {
+      console.log("Bucket may not exist, attempting to create");
+      const { error: createError } = await supabase.storage.createBucket('photos', {
+        public: true,
+        fileSizeLimit: 5242880 // 5MB
       });
       
-    if (error) {
-      console.error('Storage upload error:', error);
-      throw error;
+      if (createError) {
+        console.error("Error creating bucket:", createError);
+      }
+    }
+    
+    // Upload to Supabase Storage with retries
+    let retries = 3;
+    let uploadError = null;
+    let data = null;
+    
+    while (retries > 0) {
+      const result = await supabase.storage
+        .from('photos')
+        .upload(fileName, blob, {
+          cacheControl: '3600',
+          upsert: true // Use upsert to handle any conflicts
+        });
+        
+      if (!result.error) {
+        data = result.data;
+        break;
+      } else {
+        uploadError = result.error;
+        console.error(`Upload attempt failed (${retries} retries left):`, uploadError);
+        retries--;
+        
+        // Wait before retrying
+        if (retries > 0) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+    }
+    
+    if (uploadError) {
+      console.error('All upload attempts failed:', uploadError);
+      throw uploadError;
     }
     
     // Get public URL
@@ -58,9 +93,9 @@ export async function uploadImage(imageData: string): Promise<string | null> {
     
     // More detailed error handling
     if (error instanceof Error) {
-      if (error.message.includes('row-level security')) {
-        toast.error('Permission denied. Storage policies may need to be updated.');
-      } else if (error.message.includes('network')) {
+      if (error.message && error.message.includes('row-level security')) {
+        toast.error('Permission denied. Storage policies need to be updated.');
+      } else if (error.message && error.message.includes('network')) {
         toast.error('Network error. Please check your connection and try again.');
       } else {
         toast.error(`Upload failed: ${error.message}`);
