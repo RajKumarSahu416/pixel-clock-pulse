@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Check, Camera } from 'lucide-react';
+import { Check, Camera, AlertTriangle } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import CameraCapture from './attendance/CameraCapture';
 import CameraDisplay from './attendance/CameraDisplay';
@@ -33,6 +33,16 @@ const AttendanceCapture: React.FC = () => {
         <span className="neon-text-blue">Attendance</span> Capture
         <div className="h-[1px] w-full bg-gradient-to-r from-transparent via-cyber-neon-blue to-transparent mt-2"></div>
       </h2>
+
+      {uploadError && (
+        <div className="bg-cyber-neon-pink/10 border border-cyber-neon-pink rounded-md p-4 flex items-start">
+          <AlertTriangle className="text-cyber-neon-pink h-5 w-5 mt-0.5 mr-3 flex-shrink-0" />
+          <div>
+            <h4 className="text-cyber-neon-pink font-medium">Error</h4>
+            <p className="text-sm text-cyber-neon-pink/80 mt-1">{uploadError}</p>
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-col items-center space-y-4">
         <CameraDisplay 
@@ -82,15 +92,10 @@ const AttendanceCapture: React.FC = () => {
         </div>
 
         {uploading && (
-          <p className="text-sm text-cyber-neon-blue animate-pulse mt-2">
-            Uploading photo...
-          </p>
-        )}
-
-        {uploadError && (
-          <p className="text-sm text-cyber-neon-pink mt-2">
-            {uploadError}
-          </p>
+          <div className="flex items-center justify-center space-x-2 text-sm text-cyber-neon-blue animate-pulse mt-2">
+            <div className="h-4 w-4 border-t-2 border-cyber-neon-blue rounded-full animate-spin"></div>
+            <p>Uploading photo and processing attendance...</p>
+          </div>
         )}
 
         <AttendanceStatus 

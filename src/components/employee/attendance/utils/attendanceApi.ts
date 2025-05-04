@@ -28,26 +28,15 @@ export async function uploadImage(imageData: string): Promise<string | null> {
     
     const blob = new Blob(byteArrays, { type: 'image/png' });
     
-    // Generate a unique filename
+    // Generate a unique filename with a timestamp and random string to prevent collisions
     const timestamp = new Date().getTime();
-    const fileName = `attendance/${timestamp}.png`;
+    const randomString = Math.random().toString(36).substring(2, 10);
+    const fileName = `attendance/${timestamp}_${randomString}.png`;
     
     console.log("Uploading to bucket 'photos' with fileName:", fileName);
     
-    // Try to ensure bucket exists (this is a public bucket)
-    const { data: bucketData, error: bucketError } = await supabase.storage.getBucket('photos');
-    if (bucketError) {
-      console.log("Bucket may not exist, attempting to create");
-      const { error: createError } = await supabase.storage.createBucket('photos', {
-        public: true,
-        fileSizeLimit: 5242880 // 5MB
-      });
-      
-      if (createError) {
-        console.error("Error creating bucket:", createError);
-      }
-    }
-    
+    // Skip bucket checks since we've already created it via SQL
+
     // Upload to Supabase Storage with retries
     let retries = 3;
     let uploadError = null;
@@ -78,6 +67,12 @@ export async function uploadImage(imageData: string): Promise<string | null> {
     
     if (uploadError) {
       console.error('All upload attempts failed:', uploadError);
+      
+      // Special error handling for RLS policy issues
+      if (uploadError.message && uploadError.message.includes('row-level security policy')) {
+        throw new Error('Storage permission denied. Please log in or contact your administrator.');
+      }
+      
       throw uploadError;
     }
     
@@ -94,7 +89,7 @@ export async function uploadImage(imageData: string): Promise<string | null> {
     // More detailed error handling
     if (error instanceof Error) {
       if (error.message && error.message.includes('row-level security')) {
-        toast.error('Permission denied. Storage policies need to be updated.');
+        toast.error('Permission denied. Please log in or contact your administrator.');
       } else if (error.message && error.message.includes('network')) {
         toast.error('Network error. Please check your connection and try again.');
       } else {
@@ -122,14 +117,36 @@ export async function checkAttendanceStatus() {
     
     if (error) {
       console.error('Error fetching attendance status:', error);
+      toast.error('Failed to check attendance status.');
       return null;
     }
     
     return data;
   } catch (error) {
     console.error('Error checking attendance status:', error);
+    toast.error('Error checking attendance status.');
     return null;
   }
+}
+
+// Helper function to handle common attendance operation errors
+function handleAttendanceError(error: any, operation: string): { success: false, error: any } {
+  console.error(`Error during ${operation}:`, error);
+  
+  // Check for common RLS policy issues
+  if (error && error.code === '42501' && error.message && error.message.includes('row-level security policy')) {
+    toast.error(`Permission denied. Please log in and try again.`);
+    return { success: false, error: new Error('Permission denied') };
+  }
+  
+  // Handle other database errors
+  if (error && error.code) {
+    toast.error(`Database error (${error.code}). Please try again later.`);
+  } else {
+    toast.error(`Failed to ${operation}. Please try again.`);
+  }
+  
+  return { success: false, error };
 }
 
 export async function performQuickCheckIn() {
@@ -149,8 +166,7 @@ export async function performQuickCheckIn() {
       .maybeSingle();
     
     if (fetchError) {
-      console.error('Error checking existing attendance:', fetchError);
-      throw fetchError;
+      return handleAttendanceError(fetchError, 'checking existing attendance');
     }
 
     if (existingData) {
@@ -164,7 +180,9 @@ export async function performQuickCheckIn() {
         })
         .eq('id', existingData.id);
         
-      if (error) throw error;
+      if (error) {
+        return handleAttendanceError(error, 'updating check-in');
+      }
     } else {
       console.log('No existing attendance record, creating new record...');
       // Create new record
@@ -179,19 +197,18 @@ export async function performQuickCheckIn() {
         .select();
         
       if (error) {
-        console.error('Insert error:', error);
-        throw error;
+        return handleAttendanceError(error, 'creating attendance record');
       }
       console.log('New attendance record created:', data);
     }
 
+    toast.success('Successfully checked in!');
     return {
       success: true,
       time: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
   } catch (error) {
-    console.error('Error during quick check-in:', error);
-    return { success: false, error };
+    return handleAttendanceError(error, 'quick check-in');
   }
 }
 
@@ -210,8 +227,7 @@ export async function performCheckIn(photoUrl: string | null) {
       .maybeSingle();
       
     if (fetchError && fetchError.code !== 'PGRST116') {
-      console.error('Error checking existing attendance:', fetchError);
-      throw fetchError;
+      return handleAttendanceError(fetchError, 'checking existing attendance');
     }
     
     if (existingData) {
@@ -227,8 +243,7 @@ export async function performCheckIn(photoUrl: string | null) {
         .eq('id', existingData.id);
         
       if (error) {
-        console.error('Update error:', error);
-        throw error;
+        return handleAttendanceError(error, 'updating check-in record');
       }
     } else {
       console.log('Creating new attendance record with photo');
@@ -245,20 +260,19 @@ export async function performCheckIn(photoUrl: string | null) {
         .select();
         
       if (error) {
-        console.error('Insert error:', error);
-        throw error;
+        return handleAttendanceError(error, 'creating attendance record');
       }
       
       console.log('New attendance record created with photo:', data);
     }
     
+    toast.success('Successfully checked in with photo!');
     return {
       success: true,
       time: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
   } catch (error) {
-    console.error('Error during check-in:', error);
-    return { success: false, error };
+    return handleAttendanceError(error, 'check-in with photo');
   }
 }
 
@@ -277,11 +291,11 @@ export async function performCheckOut(photoUrl: string | null) {
       .maybeSingle();
       
     if (fetchError) {
-      console.error('Error fetching attendance record:', fetchError);
-      throw fetchError;
+      return handleAttendanceError(fetchError, 'fetching attendance record');
     }
     
     if (!attendanceData) {
+      toast.error('No check-in record found for today. Please check in first.');
       throw new Error('No check-in record found for today');
     }
     
@@ -296,16 +310,15 @@ export async function performCheckOut(photoUrl: string | null) {
       .eq('id', attendanceData.id);
       
     if (error) {
-      console.error('Update error for check-out:', error);
-      throw error;
+      return handleAttendanceError(error, 'updating check-out record');
     }
     
+    toast.success('Successfully checked out!');
     return {
       success: true,
       time: now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     };
   } catch (error) {
-    console.error('Error during check-out:', error);
-    return { success: false, error };
+    return handleAttendanceError(error, 'check-out');
   }
 }

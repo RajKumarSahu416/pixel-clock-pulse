@@ -75,22 +75,22 @@ export function useAttendance() {
   };
 
   const handleQuickCheckIn = async () => {
+    setUploadError(null);
     try {
       setUploading(true);
       const result = await performQuickCheckIn();
-      setUploading(false);
       
       if (result.success) {
         setCheckInTime(result.time);
         setCheckedIn(true);
-        toast.success('Successfully checked in!');
       } else {
-        throw result.error;
+        setUploadError('Failed to check in. Please try again or contact your administrator.');
       }
     } catch (error) {
-      setUploading(false);
       console.error('Error during quick check-in:', error);
-      toast.error('Failed to check in. Please try again.');
+      setUploadError('Failed to check in. Please try again.');
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -107,8 +107,6 @@ export function useAttendance() {
         photoUrl = await uploadImage(image);
         if (!photoUrl) {
           setUploadError('Failed to upload photo. Please check permissions and try again.');
-          console.error('Failed to upload image');
-          toast.error('Failed to upload photo. Please try again.');
           setUploading(false);
           return;
         }
@@ -122,14 +120,12 @@ export function useAttendance() {
         setCheckInTime(result.time);
         setCheckedIn(true);
         setImage(null);
-        toast.success('Successfully checked in with photo!');
       } else {
-        throw new Error(result.error || 'Unknown error during check-in');
+        setUploadError('Failed to check in. Please try again or contact your administrator.');
       }
     } catch (error: any) {
       console.error('Error during check-in:', error);
       setUploadError(error.message || 'Failed to check in. Please try again.');
-      toast.error('Failed to check in. Please try again.');
     } finally {
       setUploading(false);
     }
@@ -148,7 +144,6 @@ export function useAttendance() {
         photoUrl = await uploadImage(image);
         if (!photoUrl) {
           setUploadError('Failed to upload photo. Please check permissions and try again.');
-          toast.error('Failed to upload photo. Please try again.');
           setUploading(false);
           return;
         }
@@ -162,14 +157,12 @@ export function useAttendance() {
         setCheckOutTime(result.time);
         setCheckedIn(false);
         setImage(null);
-        toast.success('Successfully checked out!');
       } else {
-        throw new Error(result.error || 'Unknown error during check-out');
+        setUploadError('Failed to check out. Please try again or contact your administrator.');
       }
     } catch (error: any) {
       console.error('Error during check-out:', error);
       setUploadError(error.message || 'Failed to check out. Please try again.');
-      toast.error('Failed to check out. Please try again.');
     } finally {
       setUploading(false);
     }
