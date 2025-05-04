@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import AdminAttendanceList from './AdminAttendanceList';
 import { format } from 'date-fns';
+import { toast } from "sonner";
 
 const AdminAttendanceManagement: React.FC = () => {
   const [attendanceRecords, setAttendanceRecords] = useState<any[]>([]);
@@ -16,6 +17,7 @@ const AdminAttendanceManagement: React.FC = () => {
   const fetchAttendanceRecords = async () => {
     setIsLoading(true);
     try {
+      console.log(`Fetching attendance records for date: ${dateFilter}`);
       const { data, error } = await supabase
         .from('attendance')
         .select(`
@@ -33,9 +35,12 @@ const AdminAttendanceManagement: React.FC = () => {
         .order('date', { ascending: false });
 
       if (error) {
+        console.error('Error fetching attendance records:', error);
+        toast.error('Failed to load attendance records');
         throw error;
       }
 
+      console.log(`Retrieved ${data?.length || 0} attendance records`);
       if (data) {
         setAttendanceRecords(data);
       }

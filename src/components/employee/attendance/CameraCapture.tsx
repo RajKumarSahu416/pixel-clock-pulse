@@ -2,7 +2,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Camera, X } from 'lucide-react';
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 
 interface CameraCaptureProps {
   onPhotoCapture: (imageData: string) => void;
@@ -30,20 +29,26 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoCapture, onCancel,
   const startCamera = async () => {
     setIsStarting(true);
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ 
+      console.log("Attempting to start camera...");
+      const constraints = { 
         video: { 
           facingMode: "user",
           width: { ideal: 1280 },
           height: { ideal: 720 } 
         } 
-      });
+      };
+      
+      console.log("Camera constraints:", constraints);
+      const stream = await navigator.mediaDevices.getUserMedia(constraints);
       
       if (videoRef.current) {
+        console.log("Setting video source to stream");
         videoRef.current.srcObject = stream;
         streamRef.current = stream;
         
         videoRef.current.onloadedmetadata = () => {
           if (videoRef.current) {
+            console.log("Video metadata loaded, attempting to play");
             videoRef.current.play()
               .then(() => {
                 console.log("Camera successfully started");
@@ -70,8 +75,12 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoCapture, onCancel,
   };
 
   const stopCamera = () => {
+    console.log("Stopping camera stream");
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current.getTracks().forEach(track => {
+        console.log(`Stopping track: ${track.kind}`);
+        track.stop();
+      });
       streamRef.current = null;
     }
     setCapturing(false);
@@ -80,6 +89,7 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoCapture, onCancel,
   const capturePhoto = () => {
     if (videoRef.current && streamRef.current) {
       try {
+        console.log("Capturing photo from video stream");
         const canvas = document.createElement('canvas');
         canvas.width = videoRef.current.videoWidth;
         canvas.height = videoRef.current.videoHeight;
@@ -94,6 +104,9 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoCapture, onCancel,
           console.log("Photo captured successfully");
           onPhotoCapture(imageData);
           stopCamera();
+        } else {
+          console.error("Failed to get canvas context");
+          toast.error("Failed to capture photo");
         }
       } catch (error) {
         console.error('Error capturing photo:', error);

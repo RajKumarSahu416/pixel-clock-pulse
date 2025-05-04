@@ -1,6 +1,6 @@
 
-import React from 'react';
-import { Calendar, User, ImageIcon, CheckCircle2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Calendar, User, ImageIcon, CheckCircle2, X } from 'lucide-react';
 import { format } from 'date-fns';
 
 interface AttendanceRecord {
@@ -24,6 +24,8 @@ interface AdminAttendanceListProps {
 }
 
 const AdminAttendanceList: React.FC<AdminAttendanceListProps> = ({ attendanceRecords, isLoading }) => {
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+
   const formatTime = (dateString: string | null) => {
     if (!dateString) return '—';
     return format(new Date(dateString), 'hh:mm a');
@@ -97,29 +99,25 @@ const AdminAttendanceList: React.FC<AdminAttendanceListProps> = ({ attendanceRec
                 <td className="px-4 py-3">
                   <div className="flex gap-2">
                     {record.check_in_photo ? (
-                      <a 
-                        href={record.check_in_photo} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
+                      <button 
+                        onClick={() => setPreviewImage(record.check_in_photo)}
                         className="p-1 rounded-full hover:bg-cyber-neon-blue/20 text-cyber-neon-blue"
                         title="View check-in photo"
                       >
                         <ImageIcon size={16} />
-                      </a>
+                      </button>
                     ) : (
                       <span className="text-gray-500 text-sm">No check-in photo</span>
                     )}
                     
                     {record.check_out_photo && (
-                      <a 
-                        href={record.check_out_photo} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
+                      <button
+                        onClick={() => setPreviewImage(record.check_out_photo)}
                         className="p-1 rounded-full hover:bg-cyber-neon-pink/20 text-cyber-neon-pink"
                         title="View check-out photo"
                       >
                         <ImageIcon size={16} />
-                      </a>
+                      </button>
                     )}
                   </div>
                 </td>
@@ -133,6 +131,25 @@ const AdminAttendanceList: React.FC<AdminAttendanceListProps> = ({ attendanceRec
           </tbody>
         </table>
       </div>
+
+      {/* Image Preview Modal */}
+      {previewImage && (
+        <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50" onClick={() => setPreviewImage(null)}>
+          <div className="relative max-w-3xl max-h-[80vh] w-full">
+            <button 
+              onClick={() => setPreviewImage(null)} 
+              className="absolute top-4 right-4 bg-black/50 rounded-full p-1 text-white hover:bg-red-600/80"
+            >
+              <X size={24} />
+            </button>
+            <img 
+              src={previewImage} 
+              alt="Attendance photo" 
+              className="w-full h-full object-contain rounded-lg border-2 border-cyber-neon-blue/50"
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 };

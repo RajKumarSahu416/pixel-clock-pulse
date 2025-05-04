@@ -20,24 +20,36 @@ const CameraDisplay: React.FC<CameraDisplayProps> = ({ capturing, image, videoRe
       
       // Add event listener to detect when video is playing
       const handlePlaying = () => {
+        console.log("Video is now playing");
         setLoading(false);
       };
       
       if (videoRef.current) {
         videoRef.current.addEventListener('playing', handlePlaying);
+        
+        // Add a timeout to detect if video doesn't start
+        const timeoutId = setTimeout(() => {
+          if (loading) {
+            console.log("Video loading timed out");
+            setLoading(false);
+          }
+        }, 10000); // 10 second timeout
+        
+        return () => {
+          if (videoRef.current) {
+            videoRef.current.removeEventListener('playing', handlePlaying);
+          }
+          clearTimeout(timeoutId);
+        };
       }
-      
-      return () => {
-        if (videoRef.current) {
-          videoRef.current.removeEventListener('playing', handlePlaying);
-        }
-      };
+    } else {
+      setLoading(false);
     }
   }, [capturing, videoRef]);
 
   // Handle video errors
-  const handleVideoError = () => {
-    console.error("Video element encountered an error");
+  const handleVideoError = (e: React.SyntheticEvent<HTMLVideoElement, Event>) => {
+    console.error("Video element encountered an error", e);
     setVideoError(true);
     setLoading(false);
   };

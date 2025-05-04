@@ -9,6 +9,9 @@ import AttendanceActions from './attendance/AttendanceActions';
 import AttendanceStatus from './attendance/AttendanceStatus';
 import { supabase } from "@/integrations/supabase/client";
 
+// Generate a fixed test UUID - in a real app, use auth.user().id
+const TEST_USER_ID = "550e8400-e29b-41d4-a716-446655440000";
+
 const AttendanceCapture = () => {
   const [capturing, setCapturing] = useState(false);
   const [image, setImage] = useState<string | null>(null);
@@ -17,7 +20,7 @@ const AttendanceCapture = () => {
   const [checkInTime, setCheckInTime] = useState<string | undefined>(undefined);
   const [checkOutTime, setCheckOutTime] = useState<string | undefined>(undefined);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const userId = "current-user-id"; // In a real app, get this from authentication
+  const userId = TEST_USER_ID; // Use the test UUID we created
 
   useEffect(() => {
     // Check if the user has already checked in today
@@ -30,9 +33,9 @@ const AttendanceCapture = () => {
           .select('check_in_time, check_out_time')
           .eq('employee_id', userId)
           .eq('date', today)
-          .single();
+          .maybeSingle();
         
-        if (error && error.code !== 'PGRST116') {
+        if (error) {
           console.error('Error fetching attendance status:', error);
           return;
         }
@@ -107,12 +110,15 @@ const AttendanceCapture = () => {
       const timestamp = new Date().getTime();
       const fileName = `attendance/${userId}_${timestamp}.png`;
       
+      console.log("Attempting to upload to bucket 'photos' with fileName:", fileName);
+      
       // Upload to Supabase Storage
       const { data, error } = await supabase.storage
         .from('photos')
         .upload(fileName, blob);
         
       if (error) {
+        console.error('Storage upload error:', error);
         throw error;
       }
       
@@ -120,7 +126,8 @@ const AttendanceCapture = () => {
       const { data: publicUrlData } = supabase.storage
         .from('photos')
         .getPublicUrl(fileName);
-        
+      
+      console.log("File uploaded successfully, URL:", publicUrlData.publicUrl);
       return publicUrlData.publicUrl;
     } catch (error) {
       console.error('Error uploading image:', error);
@@ -137,14 +144,23 @@ const AttendanceCapture = () => {
       const timeString = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       const todayDate = now.toISOString().split('T')[0];
 
+      console.log(`Attempting quick check-in for user ${userId} on date ${todayDate}`);
+
       // Check if entry exists for today
-      const { data: existingData } = await supabase
+      const { data: existingData, error: fetchError } = await supabase
         .from('attendance')
         .select('id')
         .eq('employee_id', userId)
-        .eq('date', todayDate);
+        .eq('date', todayDate)
+        .maybeSingle();
+      
+      if (fetchError) {
+        console.error('Error checking existing attendance:', fetchError);
+        throw fetchError;
+      }
 
-      if (existingData && existingData.length > 0) {
+      if (existingData) {
+        console.log(`Existing attendance record found with ID: ${existingData.id}, updating...`);
         // Update existing record
         const { error } = await supabase
           .from('attendance')
@@ -152,21 +168,27 @@ const AttendanceCapture = () => {
             check_in_time: now.toISOString(),
             status: 'present'
           })
-          .eq('id', existingData[0].id);
+          .eq('id', existingData.id);
           
         if (error) throw error;
       } else {
+        console.log('No existing attendance record, creating new record...');
         // Create new record
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('attendance')
           .insert([{
             employee_id: userId,
             date: todayDate,
             check_in_time: now.toISOString(),
             status: 'present'
-          }]);
+          }])
+          .select();
           
-        if (error) throw error;
+        if (error) {
+          console.error('Insert error:', error);
+          throw error;
+        }
+        console.log('New attendance record created:', data);
       }
 
       setCheckInTime(timeString);
@@ -187,16 +209,30 @@ const AttendanceCapture = () => {
       const todayDate = now.toISOString().split('T')[0];
       
       // Upload image to storage if available
+      console.log('Uploading photo for check-in...');
       const photoUrl = image ? await uploadImage(image) : null;
       
+      if (!photoUrl && image) {
+        console.error('Failed to upload image');
+        toast.error('Failed to upload photo. Please try again.');
+        return;
+      }
+      
       // Check if entry exists for today
-      const { data: existingData } = await supabase
+      const { data: existingData, error: fetchError } = await supabase
         .from('attendance')
         .select('id')
         .eq('employee_id', userId)
-        .eq('date', todayDate);
+        .eq('date', todayDate)
+        .maybeSingle();
         
-      if (existingData && existingData.length > 0) {
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        console.error('Error checking existing attendance:', fetchError);
+        throw fetchError;
+      }
+      
+      if (existingData) {
+        console.log(`Updating existing attendance record with ID: ${existingData.id}`);
         // Update existing record
         const { error } = await supabase
           .from('attendance')
@@ -205,12 +241,16 @@ const AttendanceCapture = () => {
             check_in_photo: photoUrl,
             status: 'present'
           })
-          .eq('id', existingData[0].id);
+          .eq('id', existingData.id);
           
-        if (error) throw error;
+        if (error) {
+          console.error('Update error:', error);
+          throw error;
+        }
       } else {
+        console.log('Creating new attendance record with photo');
         // Create new record
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from('attendance')
           .insert([{
             employee_id: userId,
@@ -218,9 +258,15 @@ const AttendanceCapture = () => {
             check_in_time: now.toISOString(),
             check_in_photo: photoUrl,
             status: 'present'
-          }]);
+          }])
+          .select();
           
-        if (error) throw error;
+        if (error) {
+          console.error('Insert error:', error);
+          throw error;
+        }
+        
+        console.log('New attendance record created with photo:', data);
       }
       
       setCheckInTime(timeString);
@@ -242,7 +288,13 @@ const AttendanceCapture = () => {
       const todayDate = now.toISOString().split('T')[0];
       
       // Upload image to storage if available
+      console.log('Uploading photo for check-out...');
       const photoUrl = image ? await uploadImage(image) : null;
+      
+      if (!photoUrl && image) {
+        toast.error('Failed to upload photo. Please try again.');
+        return;
+      }
       
       // Get today's attendance record
       const { data: attendanceData, error: fetchError } = await supabase
@@ -250,10 +302,19 @@ const AttendanceCapture = () => {
         .select('id')
         .eq('employee_id', userId)
         .eq('date', todayDate)
-        .single();
+        .maybeSingle();
         
-      if (fetchError) throw fetchError;
+      if (fetchError) {
+        console.error('Error fetching attendance record:', fetchError);
+        throw fetchError;
+      }
       
+      if (!attendanceData) {
+        toast.error('No check-in record found for today');
+        return;
+      }
+      
+      console.log(`Updating attendance record ${attendanceData.id} with check-out data`);
       // Update with check out time
       const { error } = await supabase
         .from('attendance')
@@ -263,7 +324,10 @@ const AttendanceCapture = () => {
         })
         .eq('id', attendanceData.id);
         
-      if (error) throw error;
+      if (error) {
+        console.error('Update error for check-out:', error);
+        throw error;
+      }
       
       setCheckOutTime(timeString);
       setCheckedIn(false);
