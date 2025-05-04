@@ -5,36 +5,63 @@ import { Camera, VideoOff } from 'lucide-react';
 interface CameraDisplayProps {
   capturing: boolean;
   image: string | null;
-  videoRef?: React.RefObject<HTMLVideoElement>;
+  videoRef: React.RefObject<HTMLVideoElement>;
 }
 
 const CameraDisplay: React.FC<CameraDisplayProps> = ({ capturing, image, videoRef }) => {
   const [videoError, setVideoError] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   // Reset video error state when capturing changes
   useEffect(() => {
     if (capturing) {
       setVideoError(false);
+      setLoading(true);
+      
+      // Add event listener to detect when video is playing
+      const handlePlaying = () => {
+        setLoading(false);
+      };
+      
+      if (videoRef.current) {
+        videoRef.current.addEventListener('playing', handlePlaying);
+      }
+      
+      return () => {
+        if (videoRef.current) {
+          videoRef.current.removeEventListener('playing', handlePlaying);
+        }
+      };
     }
-  }, [capturing]);
+  }, [capturing, videoRef]);
 
   // Handle video errors
   const handleVideoError = () => {
     console.error("Video element encountered an error");
     setVideoError(true);
+    setLoading(false);
   };
 
   return (
     <div className="w-full max-w-md cyber-border rounded-lg overflow-hidden bg-black/40 aspect-video flex items-center justify-center relative">
       {capturing && !videoError ? (
-        <video
-          ref={videoRef}
-          autoPlay
-          playsInline
-          muted
-          className="w-full h-full object-cover"
-          onError={handleVideoError}
-        />
+        <>
+          <video
+            ref={videoRef}
+            autoPlay
+            playsInline
+            muted
+            className="w-full h-full object-cover"
+            onError={handleVideoError}
+          />
+          {loading && (
+            <div className="absolute inset-0 flex items-center justify-center bg-black/50">
+              <div className="animate-pulse text-cyber-neon-blue">
+                <p className="text-center">Starting camera...</p>
+              </div>
+            </div>
+          )}
+        </>
       ) : image ? (
         <img src={image} alt="Captured" className="w-full h-full object-cover" />
       ) : videoError ? (
@@ -53,7 +80,7 @@ const CameraDisplay: React.FC<CameraDisplayProps> = ({ capturing, image, videoRe
       <div className="scan-line"></div>
       
       {/* Camera grid overlay */}
-      {capturing && !videoError && (
+      {capturing && !videoError && !loading && (
         <div className="absolute inset-0 pointer-events-none">
           <div className="w-full h-full border border-cyber-neon-blue/20 grid grid-cols-3 grid-rows-3">
             {Array(9).fill(0).map((_, i) => (

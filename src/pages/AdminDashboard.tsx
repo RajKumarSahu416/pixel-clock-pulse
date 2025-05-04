@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { Users, Calendar, FileText, DollarSign } from 'lucide-react';
@@ -8,6 +7,7 @@ import DashboardContent from '../components/admin/DashboardContent';
 import PlaceholderContent from '../components/admin/PlaceholderContent';
 import AdminTabNavigation from '../components/admin/AdminTabNavigation';
 import AdminLeaveManagement from '../components/admin/leave/AdminLeaveManagement';
+import AdminAttendanceManagement from '../components/admin/attendance/AdminAttendanceManagement';
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -23,7 +23,7 @@ const AdminDashboard = () => {
     return 'dashboard';
   };
   
-  const [activeTab, setActiveTab] = useState(getInitialTab);
+  const [activeTab, setActiveTab] = useState(getInitialTab());
   
   // Handle tab changes
   const handleTabChange = (tab: string) => {
@@ -68,13 +68,7 @@ const AdminDashboard = () => {
           />
         );
       case 'attendance':
-        return (
-          <PlaceholderContent 
-            title="Attendance Management" 
-            icon={<Calendar className="w-full h-full text-cyber-neon-blue opacity-50" />}
-            color="blue"
-          />
-        );
+        return <AdminAttendanceManagement />;
       case 'leave':
         return <AdminLeaveManagement />;
       case 'payroll':

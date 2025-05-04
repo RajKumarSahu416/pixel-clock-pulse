@@ -2,20 +2,24 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Camera, X } from 'lucide-react';
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface CameraCaptureProps {
   onPhotoCapture: (imageData: string) => void;
   onCancel: () => void;
+  videoRef: React.RefObject<HTMLVideoElement>;
 }
 
-const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoCapture, onCancel }) => {
+const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoCapture, onCancel, videoRef }) => {
   const [capturing, setCapturing] = useState(false);
   const [isStarting, setIsStarting] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
-  // Clean up camera stream when component unmounts
+  // Start camera when component mounts
   useEffect(() => {
+    startCamera();
+    
+    // Clean up camera stream when component unmounts
     return () => {
       if (streamRef.current) {
         streamRef.current.getTracks().forEach(track => track.stop());
@@ -101,25 +105,13 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoCapture, onCancel 
     }
   };
 
-  if (!capturing) {
-    return (
-      <button 
-        onClick={startCamera} 
-        className="cyber-button cyber-button-blue flex items-center justify-center gap-2"
-        disabled={isStarting}
-      >
-        <Camera size={18} />
-        {isStarting ? "Starting Camera..." : "Start Camera"}
-      </button>
-    );
-  }
-
   return (
     <div className="flex flex-col gap-4">
       <div className="flex gap-2 justify-center">
         <button 
           onClick={capturePhoto}
           className="cyber-button flex items-center justify-center gap-2"
+          disabled={!capturing || isStarting}
         >
           <Camera size={18} />
           Capture Photo
@@ -136,6 +128,12 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoCapture, onCancel 
         </button>
       </div>
       
+      {isStarting && (
+        <p className="text-xs text-center text-cyber-neon-blue animate-pulse">
+          Starting camera...
+        </p>
+      )}
+
       {capturing && (
         <p className="text-xs text-center text-cyber-neon-blue">
           Look at the camera and click "Capture Photo"
