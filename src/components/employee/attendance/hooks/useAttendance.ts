@@ -22,18 +22,23 @@ export function useAttendance() {
   useEffect(() => {
     // Check if the user has already checked in today
     const fetchAttendanceStatus = async () => {
-      const data = await checkAttendanceStatus();
-      
-      if (data) {
-        if (data.check_in_time) {
-          setCheckedIn(true);
-          setCheckInTime(new Date(data.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
-        }
+      try {
+        const data = await checkAttendanceStatus();
         
-        if (data.check_out_time) {
-          setCheckedIn(false);
-          setCheckOutTime(new Date(data.check_out_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+        if (data) {
+          if (data.check_in_time) {
+            setCheckedIn(true);
+            setCheckInTime(new Date(data.check_in_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+          }
+          
+          if (data.check_out_time) {
+            setCheckedIn(false);
+            setCheckOutTime(new Date(data.check_out_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+          }
         }
+      } catch (error) {
+        console.error('Error fetching attendance status:', error);
+        toast.error('Unable to check attendance status. Please try again later.');
       }
     };
     
@@ -101,7 +106,7 @@ export function useAttendance() {
       if (image) {
         photoUrl = await uploadImage(image);
         if (!photoUrl) {
-          setUploadError('Failed to upload photo. Please try again.');
+          setUploadError('Failed to upload photo. Please check permissions and try again.');
           console.error('Failed to upload image');
           toast.error('Failed to upload photo. Please try again.');
           setUploading(false);
@@ -119,10 +124,11 @@ export function useAttendance() {
         setImage(null);
         toast.success('Successfully checked in with photo!');
       } else {
-        throw result.error;
+        throw new Error(result.error || 'Unknown error during check-in');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error during check-in:', error);
+      setUploadError(error.message || 'Failed to check in. Please try again.');
       toast.error('Failed to check in. Please try again.');
     } finally {
       setUploading(false);
@@ -141,7 +147,7 @@ export function useAttendance() {
       if (image) {
         photoUrl = await uploadImage(image);
         if (!photoUrl) {
-          setUploadError('Failed to upload photo. Please try again.');
+          setUploadError('Failed to upload photo. Please check permissions and try again.');
           toast.error('Failed to upload photo. Please try again.');
           setUploading(false);
           return;
@@ -158,10 +164,11 @@ export function useAttendance() {
         setImage(null);
         toast.success('Successfully checked out!');
       } else {
-        throw result.error;
+        throw new Error(result.error || 'Unknown error during check-out');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error during check-out:', error);
+      setUploadError(error.message || 'Failed to check out. Please try again.');
       toast.error('Failed to check out. Please try again.');
     } finally {
       setUploading(false);

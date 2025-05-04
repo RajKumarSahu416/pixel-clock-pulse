@@ -3,13 +3,14 @@ import React, { useState, useEffect } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from '@/hooks/use-toast';
 import { Calendar, File, Plus, Edit, Trash } from 'lucide-react';
+import { toast } from "sonner";
 
 const AdminLeaveTypeSettings: React.FC = () => {
   const [leaveTypes, setLeaveTypes] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [newLeaveType, setNewLeaveType] = useState({ name: '', description: '' });
   const [editingLeaveType, setEditingLeaveType] = useState<any>(null);
-  const { toast } = useToast();
+  const { toast: uiToast } = useToast();
 
   useEffect(() => {
     fetchLeaveTypes();
@@ -32,6 +33,7 @@ const AdminLeaveTypeSettings: React.FC = () => {
       }
     } catch (error) {
       console.error('Error fetching leave types:', error);
+      toast.error('Failed to load leave types');
     } finally {
       setIsLoading(false);
     }
@@ -41,42 +43,35 @@ const AdminLeaveTypeSettings: React.FC = () => {
     e.preventDefault();
     
     if (!newLeaveType.name.trim()) {
-      toast({
-        title: "Error",
-        description: "Leave type name is required",
-        variant: "destructive"
-      });
+      toast.error("Leave type name is required");
       return;
     }
     
     try {
-      const { error } = await supabase
+      setIsLoading(true);
+      const { data, error } = await supabase
         .from('leave_types')
         .insert([
           { 
             name: newLeaveType.name.trim(),
             description: newLeaveType.description.trim() || null
           }
-        ]);
+        ])
+        .select();
 
       if (error) {
         throw error;
       }
 
-      toast({
-        title: "Success",
-        description: "Leave type created successfully"
-      });
+      toast.success("Leave type created successfully");
       
       setNewLeaveType({ name: '', description: '' });
       fetchLeaveTypes();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating leave type:', error);
-      toast({
-        title: "Error",
-        description: "Failed to create leave type",
-        variant: "destructive"
-      });
+      toast.error(error.message || "Failed to create leave type");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -84,41 +79,34 @@ const AdminLeaveTypeSettings: React.FC = () => {
     e.preventDefault();
     
     if (!editingLeaveType.name.trim()) {
-      toast({
-        title: "Error",
-        description: "Leave type name is required",
-        variant: "destructive"
-      });
+      toast.error("Leave type name is required");
       return;
     }
     
     try {
-      const { error } = await supabase
+      setIsLoading(true);
+      const { data, error } = await supabase
         .from('leave_types')
         .update({ 
           name: editingLeaveType.name.trim(),
           description: editingLeaveType.description.trim() || null
         })
-        .eq('id', editingLeaveType.id);
+        .eq('id', editingLeaveType.id)
+        .select();
 
       if (error) {
         throw error;
       }
 
-      toast({
-        title: "Success",
-        description: "Leave type updated successfully"
-      });
+      toast.success("Leave type updated successfully");
       
       setEditingLeaveType(null);
       fetchLeaveTypes();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating leave type:', error);
-      toast({
-        title: "Error",
-        description: "Failed to update leave type",
-        variant: "destructive"
-      });
+      toast.error(error.message || "Failed to update leave type");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -128,6 +116,7 @@ const AdminLeaveTypeSettings: React.FC = () => {
     }
     
     try {
+      setIsLoading(true);
       const { error } = await supabase
         .from('leave_types')
         .delete()
@@ -137,23 +126,18 @@ const AdminLeaveTypeSettings: React.FC = () => {
         throw error;
       }
 
-      toast({
-        title: "Success",
-        description: "Leave type deleted successfully"
-      });
+      toast.success("Leave type deleted successfully");
       
       fetchLeaveTypes();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error deleting leave type:', error);
-      toast({
-        title: "Error",
-        description: "Failed to delete leave type. It may be in use by existing leave requests.",
-        variant: "destructive"
-      });
+      toast.error(error.message || "Failed to delete leave type. It may be in use by existing leave requests.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  if (isLoading) {
+  if (isLoading && leaveTypes.length === 0) {
     return <div className="text-center py-8">Loading leave types...</div>;
   }
 
@@ -196,9 +180,22 @@ const AdminLeaveTypeSettings: React.FC = () => {
               <button 
                 type="submit"
                 className="cyber-button-sm flex items-center"
+                disabled={isLoading}
               >
-                <Plus size={16} className="mr-1" />
-                Add Leave Type
+                {isLoading ? (
+                  <span className="flex items-center">
+                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Processing...
+                  </span>
+                ) : (
+                  <>
+                    <Plus size={16} className="mr-1" />
+                    Add Leave Type
+                  </>
+                )}
               </button>
             </div>
           </form>
@@ -237,15 +234,29 @@ const AdminLeaveTypeSettings: React.FC = () => {
                   type="button"
                   onClick={() => setEditingLeaveType(null)}
                   className="cyber-button-sm bg-cyber-gray-800"
+                  disabled={isLoading}
                 >
                   Cancel
                 </button>
                 <button 
                   type="submit"
                   className="cyber-button-sm flex items-center"
+                  disabled={isLoading}
                 >
-                  <Edit size={16} className="mr-1" />
-                  Update Leave Type
+                  {isLoading ? (
+                    <span className="flex items-center">
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Processing...
+                    </span>
+                  ) : (
+                    <>
+                      <Edit size={16} className="mr-1" />
+                      Update Leave Type
+                    </>
+                  )}
                 </button>
               </div>
             </form>
@@ -276,6 +287,7 @@ const AdminLeaveTypeSettings: React.FC = () => {
                             onClick={() => setEditingLeaveType(leaveType)}
                             className="p-1 rounded-full hover:bg-cyber-neon-blue/20 text-cyber-neon-blue"
                             title="Edit Leave Type"
+                            disabled={isLoading}
                           >
                             <Edit size={18} />
                           </button>
@@ -283,6 +295,7 @@ const AdminLeaveTypeSettings: React.FC = () => {
                             onClick={() => handleDeleteLeaveType(leaveType.id)}
                             className="p-1 rounded-full hover:bg-red-500/20 text-red-400"
                             title="Delete Leave Type"
+                            disabled={isLoading}
                           >
                             <Trash size={18} />
                           </button>
