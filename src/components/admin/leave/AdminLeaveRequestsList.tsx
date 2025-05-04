@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Calendar, CheckCircle, XCircle, User } from 'lucide-react';
+import { Calendar, CheckCircle, XCircle, User, FileText } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface AdminLeaveRequestsListProps {
