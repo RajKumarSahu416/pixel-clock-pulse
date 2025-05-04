@@ -16,6 +16,7 @@ const CameraDisplay: React.FC<CameraDisplayProps> = ({ capturing, image, videoRe
           ref={videoRef}
           autoPlay
           playsInline
+          muted
           className="w-full h-full object-cover"
         />
       ) : image ? (

@@ -1,5 +1,6 @@
 
 import React, { useState, useRef } from 'react';
+import { toast } from "sonner";
 import CameraCapture from './attendance/CameraCapture';
 import CameraDisplay from './attendance/CameraDisplay';
 import AttendanceActions from './attendance/AttendanceActions';
@@ -15,6 +16,7 @@ const AttendanceCapture = () => {
   const streamRef = useRef<MediaStream | null>(null);
 
   const handlePhotoCapture = (imageData: string) => {
+    console.log("Photo received in AttendanceCapture");
     setImage(imageData);
     setCapturing(false);
   };
@@ -25,15 +27,10 @@ const AttendanceCapture = () => {
 
   const startCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        streamRef.current = stream;
-      }
       setCapturing(true);
     } catch (error) {
-      console.error('Error accessing camera:', error);
-      alert('Unable to access camera. Please check permissions.');
+      console.error('Error starting camera:', error);
+      toast.error('Unable to access camera. Please check permissions.');
     }
   };
 
@@ -50,10 +47,8 @@ const AttendanceCapture = () => {
     setCheckedIn(true);
     setImage(null);
 
-    // Mock API call
-    setTimeout(() => {
-      console.log('Check-in successful!');
-    }, 1000);
+    // Show success message
+    toast.success('Successfully checked in!');
   };
 
   const handleCheckOut = () => {
@@ -61,12 +56,11 @@ const AttendanceCapture = () => {
     console.log('Checking out with image:', image);
     const now = new Date();
     setCheckOutTime(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+    setCheckedIn(false);
     setImage(null);
 
-    // Mock API call
-    setTimeout(() => {
-      console.log('Check-out successful!');
-    }, 1000);
+    // Show success message
+    toast.success('Successfully checked out!');
   };
 
   return (
@@ -83,7 +77,7 @@ const AttendanceCapture = () => {
           videoRef={videoRef} 
         />
 
-        <div className="flex space-x-3 mt-4">
+        <div className="flex flex-wrap justify-center gap-3 mt-4">
           {!capturing && !image && (
             <button
               onClick={startCamera}
