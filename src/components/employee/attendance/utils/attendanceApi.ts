@@ -1,4 +1,3 @@
-
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -9,6 +8,8 @@ export async function uploadImage(imageData: string): Promise<string | null> {
   if (!imageData) return null;
   
   try {
+    console.log("Starting image upload process...");
+    
     // Convert base64 to blob
     const base64Data = imageData.split(',')[1];
     const byteCharacters = atob(base64Data);
@@ -30,12 +31,15 @@ export async function uploadImage(imageData: string): Promise<string | null> {
     const timestamp = new Date().getTime();
     const fileName = `attendance/${TEST_USER_ID}_${timestamp}.png`;
     
-    console.log("Attempting to upload to bucket 'photos' with fileName:", fileName);
+    console.log("Uploading to bucket 'photos' with fileName:", fileName);
     
     // Upload to Supabase Storage
     const { data, error } = await supabase.storage
       .from('photos')
-      .upload(fileName, blob);
+      .upload(fileName, blob, {
+        cacheControl: '3600',
+        upsert: false
+      });
       
     if (error) {
       console.error('Storage upload error:', error);
@@ -51,7 +55,20 @@ export async function uploadImage(imageData: string): Promise<string | null> {
     return publicUrlData.publicUrl;
   } catch (error) {
     console.error('Error uploading image:', error);
-    toast.error('Failed to upload image. Please try again.');
+    
+    // More detailed error handling
+    if (error instanceof Error) {
+      if (error.message.includes('row-level security')) {
+        toast.error('Permission denied. Storage policies may need to be updated.');
+      } else if (error.message.includes('network')) {
+        toast.error('Network error. Please check your connection and try again.');
+      } else {
+        toast.error(`Upload failed: ${error.message}`);
+      }
+    } else {
+      toast.error('Failed to upload image. Please try again.');
+    }
+    
     return null;
   }
 }

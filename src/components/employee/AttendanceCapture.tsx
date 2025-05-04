@@ -16,6 +16,7 @@ const AttendanceCapture: React.FC = () => {
     checkedIn,
     checkInTime,
     checkOutTime,
+    uploadError,
     videoRef,
     handlePhotoCapture,
     handleCancelCapture,
@@ -83,6 +84,12 @@ const AttendanceCapture: React.FC = () => {
         {uploading && (
           <p className="text-sm text-cyber-neon-blue animate-pulse mt-2">
             Uploading photo...
+          </p>
+        )}
+
+        {uploadError && (
+          <p className="text-sm text-cyber-neon-pink mt-2">
+            {uploadError}
           </p>
         )}
 

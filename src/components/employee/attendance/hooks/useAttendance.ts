@@ -16,6 +16,7 @@ export function useAttendance() {
   const [checkedIn, setCheckedIn] = useState(false);
   const [checkInTime, setCheckInTime] = useState<string | undefined>(undefined);
   const [checkOutTime, setCheckOutTime] = useState<string | undefined>(undefined);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
@@ -43,6 +44,8 @@ export function useAttendance() {
     console.log("Photo received in AttendanceCapture");
     setImage(imageData);
     setCapturing(false);
+    // Clear any previous errors when capturing a new photo
+    setUploadError(null);
   };
 
   const handleCancelCapture = () => {
@@ -52,6 +55,8 @@ export function useAttendance() {
   const startCamera = () => {
     try {
       setCapturing(true);
+      // Clear any previous errors when starting camera
+      setUploadError(null);
     } catch (error) {
       console.error('Error starting camera:', error);
       toast.error('Unable to access camera. Please check permissions.');
@@ -60,6 +65,7 @@ export function useAttendance() {
 
   const resetCapture = () => {
     setImage(null);
+    setUploadError(null);
     startCamera();
   };
 
@@ -81,6 +87,7 @@ export function useAttendance() {
   };
 
   const handleCheckIn = async () => {
+    setUploadError(null);
     try {
       setUploading(true);
       
@@ -89,6 +96,7 @@ export function useAttendance() {
       const photoUrl = image ? await uploadImage(image) : null;
       
       if (!photoUrl && image) {
+        setUploadError('Failed to upload photo. Please try again.');
         console.error('Failed to upload image');
         toast.error('Failed to upload photo. Please try again.');
         setUploading(false);
@@ -114,6 +122,7 @@ export function useAttendance() {
   };
 
   const handleCheckOut = async () => {
+    setUploadError(null);
     try {
       setUploading(true);
       
@@ -122,6 +131,7 @@ export function useAttendance() {
       const photoUrl = image ? await uploadImage(image) : null;
       
       if (!photoUrl && image) {
+        setUploadError('Failed to upload photo. Please try again.');
         toast.error('Failed to upload photo. Please try again.');
         setUploading(false);
         return;
@@ -152,6 +162,7 @@ export function useAttendance() {
     checkedIn,
     checkInTime,
     checkOutTime,
+    uploadError,
     videoRef,
     handlePhotoCapture,
     handleCancelCapture,
