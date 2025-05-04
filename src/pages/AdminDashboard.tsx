@@ -1,11 +1,54 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Navbar from '../components/common/Navbar';
 import Footer from '../components/common/Footer';
 import { User, Calendar, FileText, DollarSign, Users, CheckCircle, Clock, X, Check, BarChart } from 'lucide-react';
 
 const AdminDashboard = () => {
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  // Set initial activeTab based on current route
+  const getInitialTab = () => {
+    const path = location.pathname;
+    if (path.includes('/admin/employees')) return 'employees';
+    if (path.includes('/admin/attendance')) return 'attendance';
+    if (path.includes('/admin/leave')) return 'leave';
+    if (path.includes('/admin/payroll')) return 'payroll';
+    return 'dashboard';
+  };
+  
+  const [activeTab, setActiveTab] = useState(getInitialTab);
+  
+  // Handle tab changes
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    
+    // Navigate to the appropriate route based on selected tab
+    switch(tab) {
+      case 'employees':
+        navigate('/admin/employees');
+        break;
+      case 'attendance':
+        navigate('/admin/attendance');
+        break;
+      case 'leave':
+        navigate('/admin/leave');
+        break;
+      case 'payroll':
+        navigate('/admin/payroll');
+        break;
+      default:
+        navigate('/admin');
+        break;
+    }
+  };
+  
+  // Update activeTab when route changes
+  useEffect(() => {
+    setActiveTab(getInitialTab());
+  }, [location.pathname]);
   
   // Mock summary data
   const summaryData = [
@@ -241,7 +284,7 @@ const AdminDashboard = () => {
                 ? 'bg-cyber-neon-purple/10 border-b-2 border-cyber-neon-purple text-white' 
                 : 'text-gray-400 hover:text-cyber-neon-blue'
             }`}
-            onClick={() => setActiveTab('dashboard')}
+            onClick={() => handleTabChange('dashboard')}
           >
             <User size={16} className="inline mr-1" />
             Dashboard
@@ -252,7 +295,7 @@ const AdminDashboard = () => {
                 ? 'bg-cyber-neon-blue/10 border-b-2 border-cyber-neon-blue text-white' 
                 : 'text-gray-400 hover:text-cyber-neon-blue'
             }`}
-            onClick={() => setActiveTab('employees')}
+            onClick={() => handleTabChange('employees')}
           >
             <Users size={16} className="inline mr-1" />
             Employees
@@ -263,7 +306,7 @@ const AdminDashboard = () => {
                 ? 'bg-cyber-neon-blue/10 border-b-2 border-cyber-neon-blue text-white' 
                 : 'text-gray-400 hover:text-cyber-neon-blue'
             }`}
-            onClick={() => setActiveTab('attendance')}
+            onClick={() => handleTabChange('attendance')}
           >
             <Calendar size={16} className="inline mr-1" />
             Attendance
@@ -274,7 +317,7 @@ const AdminDashboard = () => {
                 ? 'bg-cyber-neon-pink/10 border-b-2 border-cyber-neon-pink text-white' 
                 : 'text-gray-400 hover:text-cyber-neon-blue'
             }`}
-            onClick={() => setActiveTab('leave')}
+            onClick={() => handleTabChange('leave')}
           >
             <FileText size={16} className="inline mr-1" />
             Leave
@@ -285,7 +328,7 @@ const AdminDashboard = () => {
                 ? 'bg-cyber-neon-orange/10 border-b-2 border-cyber-neon-orange text-white' 
                 : 'text-gray-400 hover:text-cyber-neon-blue'
             }`}
-            onClick={() => setActiveTab('payroll')}
+            onClick={() => handleTabChange('payroll')}
           >
             <DollarSign size={16} className="inline mr-1" />
             Payroll
