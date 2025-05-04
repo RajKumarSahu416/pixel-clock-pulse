@@ -1,6 +1,8 @@
 
 import React, { useState, useRef } from 'react';
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Check, Camera } from 'lucide-react';
 import CameraCapture from './attendance/CameraCapture';
 import CameraDisplay from './attendance/CameraDisplay';
 import AttendanceActions from './attendance/AttendanceActions';
@@ -13,7 +15,6 @@ const AttendanceCapture = () => {
   const [checkInTime, setCheckInTime] = useState<string | undefined>(undefined);
   const [checkOutTime, setCheckOutTime] = useState<string | undefined>(undefined);
   const videoRef = useRef<HTMLVideoElement>(null);
-  const streamRef = useRef<MediaStream | null>(null);
 
   const handlePhotoCapture = (imageData: string) => {
     console.log("Photo received in AttendanceCapture");
@@ -37,6 +38,16 @@ const AttendanceCapture = () => {
   const resetCapture = () => {
     setImage(null);
     startCamera();
+  };
+
+  const handleQuickCheckIn = () => {
+    // Quick check-in without photo
+    const now = new Date();
+    setCheckInTime(now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }));
+    setCheckedIn(true);
+    
+    // Show success message
+    toast.success('Successfully checked in!');
   };
 
   const handleCheckIn = () => {
@@ -78,12 +89,21 @@ const AttendanceCapture = () => {
         />
 
         <div className="flex flex-wrap justify-center gap-3 mt-4">
+          {!checkedIn && !capturing && !image && (
+            <Button 
+              onClick={handleQuickCheckIn}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              <Check className="mr-2 h-4 w-4" /> Quick Check In
+            </Button>
+          )}
+
           {!capturing && !image && (
             <button
               onClick={startCamera}
               className="cyber-button-sm"
             >
-              Start Camera
+              <Camera size={16} className="mr-1" /> {checkedIn ? "Capture for Check Out" : "Capture with Photo"}
             </button>
           )}
 

@@ -1,6 +1,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { Camera, X } from 'lucide-react';
+import { toast } from "sonner";
 
 interface CameraCaptureProps {
   onPhotoCapture: (imageData: string) => void;
@@ -9,6 +10,7 @@ interface CameraCaptureProps {
 
 const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoCapture, onCancel }) => {
   const [capturing, setCapturing] = useState(false);
+  const [isStarting, setIsStarting] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
 
@@ -22,6 +24,7 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoCapture, onCancel 
   }, []);
 
   const startCamera = async () => {
+    setIsStarting(true);
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ 
         video: { 
@@ -35,15 +38,30 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoCapture, onCancel 
         videoRef.current.srcObject = stream;
         streamRef.current = stream;
         
-        // Wait for the video to be ready
         videoRef.current.onloadedmetadata = () => {
-          videoRef.current?.play();
+          if (videoRef.current) {
+            videoRef.current.play()
+              .then(() => {
+                console.log("Camera successfully started");
+                setCapturing(true);
+                setIsStarting(false);
+              })
+              .catch(error => {
+                console.error("Failed to play video:", error);
+                toast.error("Failed to start video playback");
+                setIsStarting(false);
+              });
+          }
         };
+      } else {
+        console.error("Video ref is null");
+        toast.error("Camera initialization failed");
+        setIsStarting(false);
       }
-      setCapturing(true);
     } catch (error) {
       console.error('Error accessing camera:', error);
-      alert('Unable to access camera. Please check permissions.');
+      toast.error('Unable to access camera. Please check permissions.');
+      setIsStarting(false);
     }
   };
 
@@ -75,10 +93,11 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoCapture, onCancel 
         }
       } catch (error) {
         console.error('Error capturing photo:', error);
-        alert('Failed to capture photo. Please try again.');
+        toast.error('Failed to capture photo. Please try again.');
       }
     } else {
       console.error('Video element or stream not available');
+      toast.error('Camera not ready. Please restart camera.');
     }
   };
 
@@ -87,9 +106,10 @@ const CameraCapture: React.FC<CameraCaptureProps> = ({ onPhotoCapture, onCancel 
       <button 
         onClick={startCamera} 
         className="cyber-button cyber-button-blue flex items-center justify-center gap-2"
+        disabled={isStarting}
       >
         <Camera size={18} />
-        Start Camera
+        {isStarting ? "Starting Camera..." : "Start Camera"}
       </button>
     );
   }
